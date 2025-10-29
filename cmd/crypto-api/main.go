@@ -2,13 +2,24 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/nospaghetti/crypto-price-api/internal/app"
 )
 
 func main() {
-	s := "gopher"
-	fmt.Printf("Hello and welcome, %s!\n", s)
+	a := &app.App{}
 
-	for i := 1; i <= 5; i++ {
-		fmt.Println("i =", 100/i)
+	mux := http.NewServeMux()
+	a.SetupRoutes(mux)
+
+	err := http.ListenAndServe(":80", mux)
+
+	if err != nil {
+		_ = fmt.Errorf("failed to start server: %v", err)
+
+		return
 	}
+
+	fmt.Println("Server listening on port 80")
 }

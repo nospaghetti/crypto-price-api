@@ -5,3 +5,13 @@ services:
     container_name: crypto-api
     ports:
       - "8080:80"
+
+  crypto-db:
+    image: postgres:14.2
+    container_name: crypto-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD:
+      POSTGRES_DB: crypto-db
