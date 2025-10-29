@@ -1,0 +1,49 @@
+basePath: /api/v1
+definitions:
+  models.Price:
+    properties:
+      exchangeRate:
+        format: float64
+        type: number
+      pair:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  v1.GetPricesResponse:
+    properties:
+      from_cache:
+        type: boolean
+      prices:
+        additionalProperties:
+          $ref: '#/definitions/models.Price'
+        type: object
+    type: object
+info:
+  contact: {}
+  description: API for fetching crypto currency prices.
+  title: Crypto Price API
+  version: "1.0"
+paths:
+  /prices:
+    get:
+      description: Returns latest crypto prices for given symbols and currencies.
+      parameters:
+      - description: Crypto symbols (e.g. btc, eth)
+        in: query
+        name: symbol
+        required: true
+        type: string
+      - description: 'Fiat currencies (default: usd)'
+        in: query
+        name: currency
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.GetPricesResponse'
+      summary: Current crypto prices
+      tags:
+      - prices
+swagger: "2.0"

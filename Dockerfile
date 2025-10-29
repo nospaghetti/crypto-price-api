@@ -1,20 +1,21 @@
-FROM golang:1.25-alpine as Builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
 
-RUN go mod download
-RUN go build -o crypto-api .
+RUN CGO_ENABLED=0 GOOS=linux go build -o bin/crypto-api ./cmd/crypto-api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o bin/docs ./cmd/docs/main.go
 
-FROM alpine:3.22
+FROM alpine:3.22 AS crypto-api
 
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root
 
-COPY --from=builder /app/crypto-api .
+COPY --from=builder /app/bin/crypto-api .
 
-EXPOSE 80
-
+EXPOSE 8080
 CMD ["./crypto-api"]

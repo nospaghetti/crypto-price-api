@@ -1,0 +1,75 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for fetching crypto currency prices.",
+        "title": "Crypto Price API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/api/v1",
+    "paths": {
+        "/prices": {
+            "get": {
+                "description": "Returns latest crypto prices for given symbols and currencies.",
+                "tags": [
+                    "prices"
+                ],
+                "summary": "Current crypto prices",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Crypto symbols (e.g. btc, eth)",
+                        "name": "symbol",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Fiat currencies (default: usd)",
+                        "name": "currency",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/v1.GetPricesResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Price": {
+            "type": "object",
+            "properties": {
+                "exchangeRate": {
+                    "type": "number",
+                    "format": "float64"
+                },
+                "pair": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.GetPricesResponse": {
+            "type": "object",
+            "properties": {
+                "from_cache": {
+                    "type": "boolean"
+                },
+                "prices": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.Price"
+                    }
+                }
+            }
+        }
+    }
+}
