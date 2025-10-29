@@ -1,0 +1,7 @@
+services:
+  crypto-api:
+    build:
+      context: .
+    container_name: crypto-api
+    ports:
+      - "8080:80"
