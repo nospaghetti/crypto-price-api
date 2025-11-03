@@ -12,7 +12,8 @@ func (h *HandlerV1) Health() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{
-			"message": "OK",
+			"server":        "OK",
+			"db_connection": "OK",
 		}
 
 		err := json.NewEncoder(w).Encode(response)

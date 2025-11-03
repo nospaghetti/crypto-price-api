@@ -13,3 +13,8 @@ type App struct {
 		History *v1history.HandlerV1
 	}
 }
+
+func NewApp() *App {
+
+	return &App{}
+}
