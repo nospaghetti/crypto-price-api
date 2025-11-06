@@ -1,8 +1,17 @@
 package v1
 
-import "net/http"
+import (
+	"net/http"
 
-type HandlerV1 struct {
+	"github.com/nospaghetti/crypto-price-api/internal/services"
+)
+
+type PricesHandler struct {
+	service *services.PricesService
+}
+
+func NewPricesHandler(service *services.PricesService) *PricesHandler {
+	return &PricesHandler{service}
 }
 
 // GetPrices godoc
@@ -13,7 +22,7 @@ type HandlerV1 struct {
 // @Produce JSON
 // @Success 200 {object} models.Price
 // @Router /api/v1/prices [get]
-func (h *HandlerV1) GetPrices() http.HandlerFunc {
+func (h *PricesHandler) GetPrices() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}

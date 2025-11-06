@@ -1,11 +1,14 @@
 package services
 
-type ServiceV1 struct {
+import "github.com/nospaghetti/crypto-price-api/internal/data/providers"
+
+type PricesService struct {
+	provider providers.PriceProvider
 }
 
-func NewServiceV1() *ServiceV1 {
-	return &ServiceV1{}
+func NewPriceService(provider providers.PriceProvider) *PricesService {
+	return &PricesService{provider}
 }
 
-func (s *ServiceV1) GetPrices() {
+func (s *PricesService) GetPrices() {
 }

@@ -21,7 +21,7 @@ func main() {
 	fmt.Println("Successfully connected to database")
 	fmt.Println("Setting up server...")
 
-	a := &app.App{db}
+	a := app.NewApp(db)
 	mux := http.NewServeMux()
 	a.SetupRoutes(mux)
 

@@ -3,12 +3,19 @@ package v1
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/nospaghetti/crypto-price-api/internal/services"
 )
 
-type HandlerV1 struct {
+type HealthHandler struct {
+	service *services.HealthService
 }
 
-func (h *HandlerV1) Health() http.HandlerFunc {
+func NewHealthHandler(service *services.HealthService) *HealthHandler {
+	return &HealthHandler{service}
+}
+
+func (h *HealthHandler) Health() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		response := map[string]string{
