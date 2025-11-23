@@ -1,13 +1,17 @@
 package services
 
-import "github.com/nospaghetti/crypto-price-api/internal/data/providers"
+import (
+	"github.com/nospaghetti/crypto-price-api/internal/data/providers"
+	"github.com/rs/zerolog"
+)
 
 type PricesService struct {
-	provider providers.PriceProvider
+	provider providers.Provider
+	logger   *zerolog.Logger
 }
 
-func NewPriceService(provider providers.PriceProvider) *PricesService {
-	return &PricesService{provider}
+func NewPriceService(provider providers.Provider, logger *zerolog.Logger) *PricesService {
+	return &PricesService{provider, logger}
 }
 
 func (s *PricesService) GetPrices() {

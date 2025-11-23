@@ -1,6 +1,8 @@
 package app
 
 import (
+	"net/http"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nospaghetti/crypto-price-api/internal/data/providers"
 	v1health "github.com/nospaghetti/crypto-price-api/internal/handlers/health/v1"
@@ -8,6 +10,7 @@ import (
 	v1prices "github.com/nospaghetti/crypto-price-api/internal/handlers/prices/v1"
 	"github.com/nospaghetti/crypto-price-api/internal/healthcheck"
 	"github.com/nospaghetti/crypto-price-api/internal/services"
+	"github.com/rs/zerolog"
 )
 
 type App struct {
@@ -20,9 +23,11 @@ type App struct {
 	}
 }
 
-func NewApp(DB *pgxpool.Pool) *App {
+func NewApp(DB *pgxpool.Pool, logger *zerolog.Logger) *App {
 	checkers := []healthcheck.Checker{healthcheck.NewDBChecker(DB)}
-	provider := providers.NewCoinGecko()
+	client := http.Client{}
+	provs := []providers.Provider{providers.NewCoinGecko(&client, "", "")}
+	chainProvider := providers.NewChainProvider(provs, logger)
 
 	healthService := services.NewHealthService(checkers)
 	pricesService := services.NewPriceService(provider)

@@ -9,27 +9,35 @@ import (
 )
 
 type CoinGecko struct {
+	client       *http.Client
+	accessHeader string
+	accessKey    string
 }
 
-func NewCoinGecko() *CoinGecko {
-	return &CoinGecko{}
+func NewCoinGecko(client *http.Client, accessHeader string, accessKey string) *CoinGecko {
+	return &CoinGecko{client, accessHeader, accessKey}
 }
 
-func (c *CoinGecko) GetPrices() []models.Price {
-	return []models.Price{}
+func (c *CoinGecko) GetPrices() ([]models.Price, error) {
+	return []models.Price{}, nil
 }
 
-func (c *CoinGecko) GetHistory() []models.Price {
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://pro-api.coingecko.com/api/v3/coins/markets", nil)
-	req.Header.Add("X-CG-DEMO-API-KEY", "CG-nWzg3BN9TLZdJEs3mNn5eWPA")
-	resp, err := client.Do(req)
-
+func (c *CoinGecko) GetHistory() ([]models.Price, error) {
+	req, err := c.newRequest("GET", "https://pro-api.coingecko.com/api/v3/coins/markets")
 	if err != nil {
-		// TODO: handle error
+		return nil, err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
 	}
 
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	var raw []map[string]interface{}
 	if err := json.Unmarshal(body, &raw); err != nil {
 		panic(err)
@@ -46,5 +54,20 @@ func (c *CoinGecko) GetHistory() []models.Price {
 		})
 	}
 
-	return []models.Price{}
+	return []models.Price{}, nil
+}
+
+func (c *CoinGecko) GetName() string {
+	return "CoinGecko"
+}
+
+func (c *CoinGecko) newRequest(method string, url string) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add(c.accessHeader, c.accessKey)
+	return req, nil
 }
