@@ -30,8 +30,8 @@ func NewApp(DB *pgxpool.Pool, logger *zerolog.Logger) *App {
 	chainProvider := providers.NewChainProvider(provs, logger)
 
 	healthService := services.NewHealthService(checkers)
-	pricesService := services.NewPriceService(provider)
-	historyService := services.NewHistoryService(provider)
+	pricesService := services.NewPriceService(chainProvider, logger)
+	historyService := services.NewHistoryService(chainProvider, logger)
 
 	healthHandler := v1health.NewHealthHandler(healthService)
 	pricesHandler := v1prices.NewPricesHandler(pricesService)

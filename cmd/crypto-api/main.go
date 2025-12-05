@@ -1,9 +1,13 @@
+// @title Crypto Price API
+// @version 1.0
+// @description API for fetching crypto currency prices.
+
+// @BasePath  /api/v1
+
 package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -19,21 +23,17 @@ func main() {
 		Logger()
 
 	logger.Info().Msg("Connecting to database...")
-	fmt.Println("Connecting to database...")
 
 	db, err := pgxpool.New(context.Background(), "postgres://user:pass@localhost:5432/mydb")
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Unable to connect to database")
-		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 	defer db.Close()
 
 	logger.Info().Msg("Successfully connected to database")
 	logger.Info().Msg("Setting up server...")
-	fmt.Println("Successfully connected to database")
-	fmt.Println("Setting up server...")
 
-	a := app.NewApp(db, logger)
+	a := app.NewApp(db, &logger)
 	mux := http.NewServeMux()
 	a.SetupRoutes(mux)
 
@@ -41,11 +41,8 @@ func main() {
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to start server")
-		_ = fmt.Errorf("failed to start server: %v", err)
-
 		return
 	}
 
 	logger.Info().Msg("Server listening on port 80")
-	fmt.Println("Server listening on port 80")
 }

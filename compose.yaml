@@ -6,7 +6,8 @@ services:
     ports:
       - "8080:80"
     environment:
-      CRYPTO_PRICE_API_KEY: "CG-nWzg3BN9TLZdJEs3mNn5eWPA"
+      COINGECKO_API_HEADER: "x-cg-demo-api-key"
+      COINGECKO_API_KEY: "CG-nWzg3BN9TLZdJEs3mNn5eWPA"
 
   crypto-db:
     image: postgres:14.2

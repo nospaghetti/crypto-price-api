@@ -38,6 +38,7 @@ func (c *ChainProvider) GetHistory() ([]models.Price, error) {
 
 func (c *ChainProvider) GetPrices() ([]models.Price, error) {
 	for _, provider := range c.providers {
+		c.logger.Info().Str("provider", provider.GetName()).Msg("Getting prices from provider")
 		result, err := provider.GetPrices()
 
 		if err != nil {
@@ -48,6 +49,7 @@ func (c *ChainProvider) GetPrices() ([]models.Price, error) {
 		}
 
 		if len(result) > 0 {
+			c.logger.Info().Str("provider", provider.GetName()).Msg("Successfully got prices from provider")
 			return result, nil
 		}
 	}
