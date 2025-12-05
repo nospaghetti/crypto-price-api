@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"github.com/nospaghetti/crypto-price-api/internal/models"
 	"github.com/rs/zerolog"
 )
 
@@ -14,7 +13,7 @@ func NewChainProvider(providers []Provider, logger *zerolog.Logger) *ChainProvid
 	return &ChainProvider{providers, logger}
 }
 
-func (c *ChainProvider) GetHistory() ([]models.Price, error) {
+func (c *ChainProvider) GetHistory() (map[string]float64, error) {
 	for _, provider := range c.providers {
 		c.logger.Info().Str("provider", provider.GetName()).Msg("Receiving history from provider")
 		result, err := provider.GetHistory()
@@ -36,10 +35,10 @@ func (c *ChainProvider) GetHistory() ([]models.Price, error) {
 	return nil, nil
 }
 
-func (c *ChainProvider) GetPrices() ([]models.Price, error) {
+func (c *ChainProvider) GetPrices(symbol string) (map[string]float64, error) {
 	for _, provider := range c.providers {
 		c.logger.Info().Str("provider", provider.GetName()).Msg("Getting prices from provider")
-		result, err := provider.GetPrices()
+		result, err := provider.GetPrices(symbol)
 
 		if err != nil {
 			c.logger.Info().Err(err).

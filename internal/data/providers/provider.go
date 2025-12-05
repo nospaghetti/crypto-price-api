@@ -1,9 +1,7 @@
 package providers
 
-import "github.com/nospaghetti/crypto-price-api/internal/models"
-
 type Provider interface {
-	GetHistory() ([]models.Price, error)
-	GetPrices() ([]models.Price, error)
+	GetHistory() (map[string]float64, error)
+	GetPrices(symbol string) (map[string]float64, error)
 	GetName() string
 }

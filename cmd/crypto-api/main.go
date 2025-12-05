@@ -36,13 +36,12 @@ func main() {
 	a := app.NewApp(db, &logger)
 	mux := http.NewServeMux()
 	a.SetupRoutes(mux)
-
-	err = http.ListenAndServe(":80", mux)
+	err = http.ListenAndServe(":8080", mux)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to start server")
 		return
 	}
 
-	logger.Info().Msg("Server listening on port 80")
+	logger.Info().Msg("Server listening on port 8080")
 }
