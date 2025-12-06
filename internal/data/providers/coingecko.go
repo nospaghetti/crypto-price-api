@@ -2,21 +2,28 @@ package providers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"sync"
+	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type CoinGecko struct {
 	logger       *zerolog.Logger
 	client       *http.Client
+	cache        *gocache.Cache
 	accessHeader string
 	accessKey    string
+	mutex        *sync.RWMutex
 }
 
-func NewCoinGecko(client *http.Client, logger *zerolog.Logger, accessHeader string, accessKey string) *CoinGecko {
-	return &CoinGecko{logger, client, accessHeader, accessKey}
+func NewCoinGecko(client *http.Client, logger *zerolog.Logger, cache *gocache.Cache, accessHeader string, accessKey string, mutex *sync.RWMutex) *CoinGecko {
+	return &CoinGecko{logger, client, cache, accessHeader, accessKey, mutex}
 }
 
 func (c *CoinGecko) GetPrices(symbol string) (map[string]float64, error) {
@@ -40,14 +47,18 @@ func (c *CoinGecko) GetPrices(symbol string) (map[string]float64, error) {
 		return nil, err
 	}
 
-	var raw []map[string]interface{}
+	var raw struct {
+		MarketData struct {
+			CurrentPrice map[string]float64 `json:"current_price"`
+		} `json:"market_data"`
+	}
 	if err := json.Unmarshal(body, &raw); err != nil {
 		c.logger.Error().Err(err).Str("provider", c.GetName()).Msg("Failed to unmarshal response")
 		return nil, err
 	}
 
 	var prices map[string]float64
-	for _, item := range raw {
+	for _, item := range raw.MarketData.CurrentPrice {
 		symbol, _ := item["symbol"].(string)
 		price, _ := item["current_price"].(float64)
 
@@ -103,43 +114,84 @@ func (c *CoinGecko) GetName() string {
 }
 
 func (c *CoinGecko) getIdBySymbol(symbol string) (string, error) {
-	c.logger.Info().Str("provider", c.GetName()).Msg("Sending id by symbol request")
-	req, err := c.newRequest("GET", "https://pro-api.coingecko.com/api/v3/coins/list")
-	if err != nil {
-		c.logger.Error().Err(err).Str("provider", c.GetName()).Msg("Failed to prepare request")
-		return "", err
+	coins, ok := c.cache.Get("coingecko.coins.list")
+	if ok {
+		id, ok := coins.(map[string]string)[symbol]
+		if ok {
+			return id, nil
+		}
 	}
 
-	resp, err := c.client.Do(req)
-	if err != nil {
-		c.logger.Error().Err(err).Str("provider", c.GetName()).Msg("Failed to send request")
-		return "", err
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.logger.Error().Err(err).Str("provider", c.GetName()).Msg("Failed to read response")
-		return "", err
-	}
-
-	var raw []map[string]interface{}
-	if err := json.Unmarshal(body, &raw); err != nil {
-		c.logger.Error().Err(err).Str("provider", c.GetName()).Msg("Failed to unmarshal response")
+	if err := c.refreshCoinList(); err != nil {
 		return "", err
 	}
 
 	var id string
-	for _, item := range raw {
-		s, _ := item["symbol"].(string)
-
-		if s == symbol {
-			id, _ = item["id"].(string)
+	coins, ok = c.cache.Get("coingecko.coins.list")
+	if ok {
+		id, ok = coins.(map[string]string)[symbol]
+		if !ok {
+			return "", fmt.Errorf("failed to get id by symbol")
 		}
 	}
 
-	c.logger.Info().Str("provider", c.GetName()).Msg("Successfully parsed id from symbol response")
-
 	return id, nil
+}
+
+func (c *CoinGecko) refreshCoinList() error {
+	c.logger.With().Str("provider", c.GetName()).Logger()
+	log.Info().Msg("Sending request to get coin list")
+	// TODO: вынести baseUrl
+	req, err := c.newRequest("GET", "https://api.coingecko.com/api/v3/coins/list")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to prepare request")
+		return err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to send request")
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Error().
+			Int("status_code", resp.StatusCode).
+			Msg("Failed to get coin list")
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read response")
+		return err
+	}
+
+	var raw []struct {
+		ID     string `json:"id"`
+		Symbol string `json:"symbol"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal response")
+		return err
+	}
+
+	coins := make(map[string]string, len(raw))
+	for _, coin := range raw {
+		coins[coin.Symbol] = coin.ID
+	}
+
+	c.cache.Set("coingecko.coins.list", coins, time.Minute*15)
+	log.Info().Msg("Successfully parsed coin list response")
+
+	return nil
 }
 
 func (c *CoinGecko) newRequest(method string, url string) (*http.Request, error) {
