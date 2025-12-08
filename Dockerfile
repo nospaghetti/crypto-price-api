@@ -7,7 +7,6 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o bin/crypto-api ./cmd/crypto-api/main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -o bin/docs ./cmd/docs/main.go
 
 FROM alpine:3.22 AS crypto-api
 

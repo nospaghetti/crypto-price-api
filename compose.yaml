@@ -6,6 +6,3 @@ services:
     container_name: crypto-api
     ports:
       - "8080:8080"
-    environment:
-      COINGECKO_API_HEADER: "x-cg-demo-api-key"
-      COINGECKO_API_KEY: "CG-nWzg3BN9TLZdJEs3mNn5eWPA"

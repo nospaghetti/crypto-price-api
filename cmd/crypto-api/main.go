@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/nospaghetti/crypto-price-api/internal/app"
+	"github.com/nospaghetti/crypto-price-api/internal/config"
 	"github.com/rs/zerolog"
 )
 
@@ -19,12 +20,19 @@ func main() {
 		Timestamp().
 		Str("app", "crypto-price-api").
 		Logger()
-	logger.Info().Msg("Setting up server...")
 
-	a := app.NewApp(&logger)
+	logger.Info().Msg("Loading configuration...")
+	cfg, err := config.Load(&logger)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("failed to load configuration")
+		return
+	}
+
+	logger.Info().Msg("Starting server...")
+	a := app.NewApp(cfg, &logger)
 	mux := http.NewServeMux()
 	a.SetupRoutes(mux)
-	err := http.ListenAndServe(":8080", mux)
+	err = http.ListenAndServe(":"+os.Getenv("PORT"), mux)
 
 	if err != nil {
 		logger.Fatal().Err(err).Msg("failed to start server")

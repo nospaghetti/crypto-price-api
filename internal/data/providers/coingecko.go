@@ -2,30 +2,27 @@ package providers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"sync"
 
+	"github.com/nospaghetti/crypto-price-api/internal/apperr"
+	"github.com/nospaghetti/crypto-price-api/internal/config"
 	"github.com/rs/zerolog"
 )
 
 type CoinGecko struct {
-	logger       *zerolog.Logger
-	client       *http.Client
-	coinList     map[string]string
-	accessHeader string
-	accessKey    string
-	mutex        *sync.RWMutex
+	logger *zerolog.Logger
+	client *http.Client
+	cfg    config.CoinGecko
 }
 
-func NewCoinGecko(client *http.Client, logger *zerolog.Logger, coinList map[string]string, accessHeader string, accessKey string, mutex *sync.RWMutex) *CoinGecko {
-	return &CoinGecko{logger, client, coinList, accessHeader, accessKey, mutex}
+func NewCoinGecko(client *http.Client, logger *zerolog.Logger, cfg config.CoinGecko) *CoinGecko {
+	return &CoinGecko{logger, client, cfg}
 }
 
 func (c *CoinGecko) GetPrices(symbol string) (map[string]float64, error) {
-	id, ok := c.coinList[symbol]
+	id, ok := c.cfg.CoinIDList[symbol]
 	log := c.logger.With().
 		Str("provider", c.GetName()).
 		Str("request", "GetPrices").
@@ -33,7 +30,7 @@ func (c *CoinGecko) GetPrices(symbol string) (map[string]float64, error) {
 
 	if !ok {
 		c.logger.Warn().Str("symbol", symbol).Msg("Symbol not found in configured coin list")
-		return nil, errors.New("symbol not found in configured coin list")
+		return nil, fmt.Errorf("%w: symbol %q not found in configured coin list", apperr.InternalError, symbol)
 	}
 
 	c.logger.Info().Msg("Preparing request")
@@ -48,6 +45,12 @@ func (c *CoinGecko) GetPrices(symbol string) (map[string]float64, error) {
 		c.logger.Error().Err(err).Msg("Failed to send request")
 		return nil, err
 	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		log.Error().Int("status_code", resp.StatusCode).Msg("Unexpected status code")
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
@@ -90,6 +93,6 @@ func (c *CoinGecko) newRequest(method string, url string) (*http.Request, error)
 		return nil, err
 	}
 
-	req.Header.Add(c.accessHeader, c.accessKey)
+	req.Header.Add(c.cfg.AuthHeaderName, c.cfg.AuthHeaderValue)
 	return req, nil
 }

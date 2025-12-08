@@ -17,6 +17,22 @@ func NewPricesHandler(service *services.PricesService) *PricesHandler {
 	return &PricesHandler{service}
 }
 
+type APIError struct {
+	Error struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	} `json:"error"`
+}
+
+func writeAPIError(w http.ResponseWriter, status int, code, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	var e APIError
+	e.Error.Code = code
+	e.Error.Message = msg
+	_ = json.NewEncoder(w).Encode(e)
+}
+
 // GetPrices GetPrice godoc
 // @Summary Current crypto prices
 // @Description Returns latest crypto prices for given symbols and currencies. Only found fiat currencies are returned.
@@ -27,9 +43,9 @@ func NewPricesHandler(service *services.PricesService) *PricesHandler {
 // @Router /prices [get]
 func (h *PricesHandler) GetPrices() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		symbol := r.URL.Query().Get("symbol")
+		symbol := strings.TrimSpace(r.URL.Query().Get("symbol"))
 		if symbol == "" {
-			http.Error(w, "symbol query parameter is required", http.StatusBadRequest)
+			writeAPIError(w, http.StatusBadRequest, "invalid_argument", "symbol query parameter is required")
 			return
 		}
 
