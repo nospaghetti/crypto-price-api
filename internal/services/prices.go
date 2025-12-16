@@ -16,7 +16,7 @@ func NewPriceService(provider providers.Provider, logger *zerolog.Logger, cache 
 	return &PricesService{provider, logger, cache}
 }
 
-func (s *PricesService) GetPrices(symbol string, currencies []string) (map[string]float64, error) {
+func (s *PricesService) GetPrices(symbol string, fiats []string) (map[string]float64, error) {
 	prices, ok := s.cache.Get(symbol)
 
 	if !ok {
@@ -30,8 +30,8 @@ func (s *PricesService) GetPrices(symbol string, currencies []string) (map[strin
 		prices = fetchedPrices
 	}
 
-	var output = make(map[string]float64, len(currencies))
-	for _, currency := range currencies {
+	var output = make(map[string]float64, len(fiats))
+	for _, currency := range fiats {
 		if price, ok := prices.(map[string]float64)[currency]; ok {
 			output[currency] = price
 		}

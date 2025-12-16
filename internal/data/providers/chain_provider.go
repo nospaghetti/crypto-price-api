@@ -14,6 +14,8 @@ func NewChainProvider(providers []Provider, logger *zerolog.Logger) *ChainProvid
 }
 
 func (c *ChainProvider) GetPrices(symbol string) (map[string]float64, error) {
+	// 1. Метод возвращает модель models.Price так как в ней есть источник
+	// 2. Объединяем все ответы в массив и выдаем его в сервис
 	for _, provider := range c.providers {
 		c.logger.Info().Str("provider", provider.GetName()).Msg("Getting prices from provider")
 		result, err := provider.GetPrices(symbol)

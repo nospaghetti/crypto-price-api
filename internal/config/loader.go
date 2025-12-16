@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -36,6 +37,9 @@ func Load(logger *zerolog.Logger) (AppConfig, error) {
 			continue
 		}
 	}
+	sort.Slice(cfg.EnabledProviders, func(i, j int) bool {
+		return cfg.EnabledProviders[i].Priority > cfg.EnabledProviders[j].Priority
+	})
 
 	// CoinGecko config
 	cfg.CoinGecko.AuthHeaderName, err = getEnv("CG_AUTH_HEADER_NAME")
